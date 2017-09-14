@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: "demohst-service"
+  name: "demoxxx-service"
 spec:
   # if your cluster supports it, uncomment the following to automatically create
   # an external load-balanced IP for the frontend service.
@@ -15,12 +15,12 @@ spec:
     port: 9443
 
   selector:
-    app: "demohst-selector"
+    app: "demoxxx-selector"
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: "demohst-deployment"
+  name: "demoxxx-deployment"
 spec:
   # this replicas value is default
   # modify it according to your case
@@ -28,17 +28,53 @@ spec:
   template:
     metadata:
       labels:
-        app: "demohst-selector"
+        app: "demoxxx-selector"
     spec:
       containers:
-      - name: demohst
-        image: demohst:latest
+      - name: demoxxx
+        image: demoxxx:latest
         readinessProbe:
           httpGet:
-            path: /demohst/health
+            path: /demoxxx/health
             port: 9080
           initialDelaySeconds: 20
         # resources:
         #   requests:
         #     cpu: 100m
-        #     memory: 100Mi
+        #     memory: 100Mivolumes:
+#KLP Next section Added for MSBuilder Fabric and ELK Stack
+        env:
+          - name: MB_KEYSTORE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mb-keystore-password
+                key: password
+          - name: MB_TRUSTSTORE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mb-truststore-password
+                key: password
+        volumeMounts:
+          - name: keystores
+            mountPath: /etc/wlp/config/keystore
+            readOnly: true
+          - name: truststores
+            mountPath: /etc/wlp/config/truststore
+            readOnly: true
+          - name: liberty-config
+            mountPath: /config/configDropins
+      volumes:
+        - name: keystores
+          secret:
+            secretName: mb-keystore
+        - name: truststores
+          secret:
+            secretName: mb-truststore
+        - name: liberty-config
+          configMap:
+            name: liberty-logging-config
+            items:
+              - key: keystore.xml
+                path: defaults/keystore.xml
+              - key: logging.xml
+                path: defaults/logging.xml
